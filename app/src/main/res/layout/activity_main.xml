@@ -177,17 +177,33 @@
 
         </android.support.v7.widget.CardView>
 
-        <moe.shizuku.bridge.widget.HtmlTextView
-            android:id="@+id/work_profile_desc"
+        <LinearLayout
+            android:id="@+id/help_container"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
             android:paddingStart="8dp"
             android:paddingEnd="8dp"
             android:paddingTop="16dp"
-            android:paddingBottom="16dp"
-            android:lineSpacingExtra="2dp"
-            android:text="@string/work_profile_desc"
-            android:textColor="?android:textColorSecondary"/>
+            android:paddingBottom="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp"
+                android:textSize="18sp"
+                android:fontFamily="sans-serif-medium"
+                android:text="@string/help"/>
+
+            <moe.shizuku.bridge.widget.HtmlTextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:lineSpacingExtra="2dp"
+                app:textHtml="@string/help_detail"
+                android:textColor="?android:textColorSecondary"/>
+
+        </LinearLayout>
 
     </LinearLayout>
 

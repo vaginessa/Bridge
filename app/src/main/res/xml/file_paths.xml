@@ -2,4 +2,7 @@
 <paths>
     <external-path name="files" path="/Download/Bridge/" />
     <external-path name="screenshots" path="/Pictures/Screenshots/" />
+
+    <external-cache-path name="cached" path="/files/" />
+
 </paths>

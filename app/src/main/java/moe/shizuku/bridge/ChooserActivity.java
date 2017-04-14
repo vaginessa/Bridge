@@ -1,6 +1,7 @@
 package moe.shizuku.bridge;
 
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
@@ -8,15 +9,18 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.annotation.Nullable;
+import android.support.v4.content.FileProvider;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.TextView;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 import moe.shizuku.bridge.adapter.ChooserAdapter;
+import moe.shizuku.bridge.utils.IntentUtils;
 import moe.shizuku.bridge.utils.ResolveInfoHelper;
 import moe.shizuku.bridge.widget.ResolverDrawerLayout;
 
@@ -28,6 +32,11 @@ public class ChooserActivity extends Activity {
 
     public static final String EXTRA_RESOLVE_INFO = BuildConfig.APPLICATION_ID + ".intent.extra.RESOLVE_INFO";
 
+    /**
+     * Start target select
+     *
+     * @param context
+     */
     public static void start(Context context) {
         Intent shareIntent = new Intent(Intent.ACTION_SEND);
         shareIntent.setDataAndType(Uri.parse("content://example"), "*/*");
@@ -36,6 +45,14 @@ public class ChooserActivity extends Activity {
         start(context, null, null, ResolveInfoHelper.filter(resolveInfo, true));
     }
 
+    /**
+     * Start chooser
+     *
+     * @param context
+     * @param uri
+     * @param type
+     * @param resolveInfo
+     */
     public static void start(Context context, Uri uri, String type, List<ResolveInfo> resolveInfo) {
         Intent intent = new Intent(context, ChooserActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
@@ -68,15 +85,47 @@ public class ChooserActivity extends Activity {
 
         if (!editMode) {
             empty.setText(R.string.select_first);
-        } else {
-            TextView profile_button = (TextView) findViewById(R.id.profile_button);
-            profile_button.setVisibility(View.VISIBLE);
+        }
+
+        TextView profile_button = (TextView) findViewById(R.id.profile_button);
+        if (editMode) {
             profile_button.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     finish();
                 }
             });
+        } else {
+            final ResolveInfo info = ResolveInfoHelper.findForward(resolveInfo);
+            if (info == null) {
+                profile_button.setVisibility(View.GONE);
+            } else {
+                resolveInfo = ResolveInfoHelper.filterForward(resolveInfo);
+
+                profile_button.setText(info.loadLabel(getPackageManager()));
+                profile_button.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Activity activity = ChooserActivity.this;
+
+                        Intent intent = new Intent(Intent.ACTION_SEND);
+                        intent.setType("bridge/" + activity.getIntent().getType());
+                        Uri uri = activity.getIntent().getData();
+                        uri = FileProvider.getUriForFile(activity, BuildConfig.APPLICATION_ID + ".fileprovider", new File(uri.getPath()));
+                        intent.putExtra(Intent.EXTRA_STREAM, uri);
+                        intent.setComponent(ComponentName.createRelative(info.activityInfo.packageName, info.activityInfo.name));
+
+                        IntentUtils.startOtherActivity(activity, intent);
+
+                        activity.finish();
+                    }
+                });
+            }
+
+            if (resolveInfo.isEmpty()
+                    && info != null) {
+                profile_button.callOnClick();
+            }
         }
 
         RecyclerView list = (RecyclerView) findViewById(R.id.resolver_list);

@@ -15,7 +15,7 @@ public class BridgeSettings {
 
     private static Set<String> sForwardActivities;
 
-    private static Set<String> getForwardActivities() {
+    public static Set<String> getForwardActivities() {
         if (sForwardActivities == null) {
             sForwardActivities = Settings.getStringSet(FORWARD_ACTIVITIES, new HashSet<String>());
         }

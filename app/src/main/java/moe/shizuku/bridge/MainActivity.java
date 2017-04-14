@@ -3,7 +3,6 @@ package moe.shizuku.bridge;
 import android.Manifest;
 import android.app.Activity;
 import android.content.ComponentName;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.UserManager;
@@ -12,6 +11,7 @@ import android.view.View;
 import android.widget.Switch;
 
 import moe.shizuku.bridge.utils.PackageManagerUtils;
+import moe.shizuku.bridge.utils.UserManagerUtils;
 
 public class MainActivity extends Activity {
 
@@ -69,10 +69,8 @@ public class MainActivity extends Activity {
             }
         });
 
-        UserManager userManager = (UserManager) getSystemService(USER_SERVICE);
-        boolean usingWorkProfile = userManager.getUserProfiles().size() > 1;
-        if (!usingWorkProfile) {
-            findViewById(R.id.work_profile_desc).setVisibility(View.GONE);
+        if (!UserManagerUtils.isUsingWorkProfile((UserManager) getSystemService(USER_SERVICE))) {
+            findViewById(R.id.help_container).setVisibility(View.GONE);
         }
     }
 

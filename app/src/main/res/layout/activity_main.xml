@@ -177,6 +177,8 @@
 
         </android.support.v7.widget.CardView>
 
+        <include layout="@layout/content_pay"/>
+
         <LinearLayout
             android:id="@+id/help_container"
             android:layout_width="match_parent"

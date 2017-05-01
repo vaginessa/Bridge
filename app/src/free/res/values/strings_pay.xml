@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="support_developer">Support developer</string>
+    <string name="paid_version_from_google_play">Paid version from Google play</string>
+    <string name="alipay">Alipay (will not remove this card)</string>
+    <string name="support_developer_desc" translatable="false"><![CDATA[如果这个应用真的能解决你的需求（分享到 QQ 等国产辣鸡，分享到工作用户等），你应该不会为介意为此付费吧 &gt;&lt;<br>而且做这个应用前前后后也花了不少时间的（]]></string>
+</resources>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="support_developer">支持开发者</string>
+    <string name="paid_version_from_google_play">来自 Google play 的付费版</string>
+    <string name="alipay">支付宝（不会移除该卡片）</string>
+
+</resources>

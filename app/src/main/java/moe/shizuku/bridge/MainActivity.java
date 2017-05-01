@@ -3,13 +3,16 @@ package moe.shizuku.bridge;
 import android.Manifest;
 import android.app.Activity;
 import android.content.ComponentName;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.UserManager;
 import android.support.annotation.NonNull;
 import android.view.View;
 import android.widget.Switch;
 
+import moe.shizuku.bridge.utils.IntentUtils;
 import moe.shizuku.bridge.utils.PackageManagerUtils;
 import moe.shizuku.bridge.utils.UserManagerUtils;
 
@@ -28,11 +31,11 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         // too bad
-        if ("paid".equals(BuildConfig.FLAVOR)
+        /*if ("paid".equals(BuildConfig.FLAVOR)
                 && !"com.android.vending".equals(getPackageManager().getInstallerPackageName(BuildConfig.APPLICATION_ID))) {
             finish();
             return;
-        }
+        }*/
 
         setContentView(R.layout.activity_main);
 
@@ -71,6 +74,23 @@ public class MainActivity extends Activity {
 
         if (!UserManagerUtils.isUsingWorkProfile((UserManager) getSystemService(USER_SERVICE))) {
             findViewById(R.id.help_container).setVisibility(View.GONE);
+        }
+
+        if ("free".equals(BuildConfig.FLAVOR)) {
+            findViewById(android.R.id.button1).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    IntentUtils.startOtherActivity(v.getContext(), new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=moe.shizuku.bridge")));
+                }
+            });
+
+            findViewById(android.R.id.button2).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    IntentUtils.startOtherActivity(v.getContext(), new Intent(Intent.ACTION_VIEW,
+                            Uri.parse("alipayqr://platformapi/startapp?saId=10000007&qrcode=https%3A%2F%2Fqr.alipay.com%2Faex01083scje5axcttivf13")));
+                }
+            });
         }
     }
 

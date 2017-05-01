@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/support_developer"
+        android:textSize="18sp"
+        android:fontFamily="sans-serif-medium"
+        android:paddingTop="24dp"
+        android:paddingBottom="8dp"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp">
+    </TextView>
+
+    <android.support.v7.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:stateListAnimator="@animator/raise"
+        android:theme="@style/AppTheme.SaveCard"
+        app:cardBackgroundColor="#3949AB"
+        app:contentPadding="16dp"
+        app:cardCornerRadius="2dp"
+        app:cardElevation="2dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+
+            <moe.shizuku.bridge.widget.HtmlTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="?android:textColorSecondaryInverse"
+                android:textSize="14sp"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp"
+                android:lineSpacingExtra="2dp"
+                app:textHtml="@string/support_developer_desc"/>
+
+            <TextView
+                android:id="@android:id/button1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@android:style/Widget.Material.Button.Borderless"
+                android:textColor="?android:textColorPrimaryInverse"
+                android:text="@string/paid_version_from_google_play"/>
+
+            <TextView
+                android:id="@android:id/button2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@android:style/Widget.Material.Button.Borderless"
+                android:textColor="?android:textColorPrimaryInverse"
+                android:text="@string/alipay"
+                android:minWidth="0dp"/>
+
+        </LinearLayout>
+
+    </android.support.v7.widget.CardView>
+</merge>

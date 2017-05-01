@@ -15,6 +15,7 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 
 import moe.shizuku.bridge.BridgeSettings;
+import moe.shizuku.bridge.ChooserActivity;
 import moe.shizuku.bridge.R;
 import moe.shizuku.bridge.utils.IntentUtils;
 import moe.shizuku.utils.recyclerview.BaseViewHolder;
@@ -50,11 +51,9 @@ public class ChooserItemViewHolder extends BaseViewHolder<ResolveInfo> {
 
                     getAdapter().notifyItemChanged(getAdapterPosition(), CHECK_SELECT_PAYLOAD);
                 } else {
-                    Intent intent = new Intent(Intent.ACTION_SEND);
-                    intent.setType(getActivity().getIntent().getType());
-                    intent.putExtra(Intent.EXTRA_STREAM, getActivity().getIntent().getData());
+                    Intent intent = new Intent(getActivity().getIntent());
                     intent.setComponent(ComponentName.createRelative(getData().activityInfo.packageName, getData().activityInfo.name));
-
+                    intent.removeExtra(ChooserActivity.EXTRA_RESOLVE_INFO);
                     IntentUtils.startOtherActivity(v.getContext(), intent);
 
                     getActivity().finish();

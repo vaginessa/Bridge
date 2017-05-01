@@ -5,7 +5,10 @@
     <string name="action_forwarding">Forwarding</string>
     <string name="save_failed" formatted="false">Save failed.\n%s</string>
     <string name="saved" formatted="false">Saved %s.</string>
-    <string name="save_notification">File saved</string>
+    <plurals name="saved_multiple">
+        <item quantity="one">%2$s and other %1$d file has been saved to %3$s.</item>
+        <item quantity="other">%2$s and other %1$d files has been saved to %3$s.</item>
+    </plurals>
     <string name="forward_title">Forward…</string>
     <string name="select_forward_apps_title">Tap to toggle whether to show…</string>
 
@@ -28,6 +31,8 @@
     <string name="help">Help</string>
     <string name="help_detail"><![CDATA[It seems that you have enabled work profile, to transfer file cross main user and work profile, you should install Bridge and enable functions <b>in that user</b> first.<br><br>Usually to most apps, you just need to tap \"Switch to work (personal)\" from Android system. But to some <b>poor-designed</b> apps, you should tap <b>\"Forwarding\"</b> and tap <b>\"Switch to work (personal)\"</b> from <b>Bridge</b> first, then you can do the thing you want (share or save).<br><br><i>\"Poor-designed apps\" above means:<br>The app can\'t handle <font face="monospace">content uri</font>, acts like the app shows \"file not found\" or just closed.<br>The app will share <font face="monospace">file uri</font> (file path) to other apps, other apps may not have permission to read the file.<i>]]></string>
 
-    <string name="file_uri_cross_user">Sharing from poor-designed app, you should share to \"Forwarding\" and choose \"Save to internal storage\" from Bridge.</string>
+    <string name="file_uri_cross_user">Sharing from poor-designed app, you should share to \"Forwarding\" from Bridge first.</string>
+
+    <string name="no_extra">This app did not send file.</string>
 
 </resources>

@@ -3,6 +3,7 @@ package moe.shizuku.bridge.service;
 import android.Manifest;
 import android.app.IntentService;
 import android.content.ComponentName;
+import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -18,6 +19,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 
 import moe.shizuku.bridge.BuildConfig;
 import moe.shizuku.bridge.ChooserActivity;
@@ -30,7 +32,7 @@ public class FileSaveService extends IntentService {
 
     private static final String TAG = "FileSaveService";
 
-    private static final String ACTION_SAVE_FILE = BuildConfig.APPLICATION_ID + ".intent.action.SAVE_FILE";
+    private static final String ACTION_CLEAR_CACHE = BuildConfig.APPLICATION_ID + ".intent.action.CLEAR_CACHE";
 
     private static final String EXTRA_SHARE = BuildConfig.APPLICATION_ID + ".intent.extra.SHARE";
 
@@ -38,56 +40,155 @@ public class FileSaveService extends IntentService {
         super("FileSaveService");
     }
 
-    public static void startSaveFile(Context context, Uri uri, String type, boolean share) {
+    public static void startClearCache(Context context) {
         Intent intent = new Intent(context, FileSaveService.class);
-        intent.setAction(ACTION_SAVE_FILE);
-        intent.setDataAndType(uri, type);
+        intent.setAction(ACTION_CLEAR_CACHE);
+        context.startService(intent);
+    }
+
+    public static void startSaveFile(Context context, Intent intent, boolean share) {
+        intent = new Intent(intent);
+        intent.setComponent(ComponentName.createRelative(context, FileSaveService.class.getName()));
         intent.putExtra(EXTRA_SHARE, share);
         context.startService(intent);
     }
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        if (intent != null) {
-            handleSaveFile(intent.getData(), intent.getType(), intent.getBooleanExtra(EXTRA_SHARE, false));
+        if (intent == null || !intent.hasExtra(Intent.EXTRA_STREAM)) {
+            return;
+        }
+
+        switch (intent.getAction()) {
+            case Intent.ACTION_SEND:
+            case Intent.ACTION_SEND_MULTIPLE:
+                handleSaveFile(intent);
+                break;
+            case ACTION_CLEAR_CACHE:
+                FileUtils.clearCache(this);
+                break;
+        }
+    }
+
+    private static class Result {
+        private File file;
+        private Uri uri;
+        private Exception e;
+
+        public Result(File file, Uri uri) {
+            this.file = file;
+            this.uri = uri;
+        }
+
+        public Result(Exception e) {
+            this.e = e;
+        }
+    }
+
+    private void handleSaveFile(Intent intent) {
+        boolean share = intent.getBooleanExtra(EXTRA_SHARE, false);
+
+        if (!checkPermission(share)) {
+            Log.d(TAG, "no write storage permission");
+
+            toast(getString(R.string.fail_no_write_storage_permission));
+            return;
+        }
+
+        ArrayList<Uri> uris;
+        if (intent.getAction().equals(Intent.ACTION_SEND)) {
+            uris = new ArrayList<>();
+            uris.add(intent.<Uri>getParcelableExtra(Intent.EXTRA_STREAM));
+        } else {
+            uris = intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
+        }
+
+        File firstFile = null;
+        Uri firstUri = null;
+
+        ArrayList<Uri> u = new ArrayList<>();
+        for (Uri uri : uris) {
+            Result result = save(uri, share);
+
+            if (result.e != null) {
+                toast(getString(R.string.save_failed, result.e.getMessage()));
+                continue;
+            }
+
+            if (firstFile == null) {
+                firstFile = result.file;
+                firstUri = result.uri;
+            }
+
+            if (!share) {
+                sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(result.file)));
+            }
+
+            u.add(result.uri);
+        }
+
+        if (firstFile == null) {
+            return;
+        }
+
+        String path = FileUtils.getRelativePathOfExternalStorage(firstFile);
+        if (!share) {
+            if (intent.getAction().equals(Intent.ACTION_SEND) || u.size() == 1) {
+                toast(getString(R.string.saved, path));
+            } else {
+                path = path.substring(0, path.length() - firstFile.getName().length());
+                toast(getResources().getQuantityString(R.plurals.saved_multiple, u.size() - 1, u.size() - 1, firstFile.getName(), path));
+            }
+        } else {
+            intent.setPackage(null)
+                    .setComponent(null)
+                    .removeExtra(EXTRA_SHARE);
+
+            if (intent.getAction().equals(Intent.ACTION_SEND)) {
+                intent.putExtra(Intent.EXTRA_STREAM, firstUri);
+            } else {
+                intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, u);
+            }
+
+            ChooserActivity.start(this, intent, ResolveInfoHelper.filter(getPackageManager().queryIntentActivities(intent, 0), false));
+        }
+    }
+
+    private boolean checkPermission(boolean share) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (!share && checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private File getFile(Uri uri, boolean share) {
+        String filename = FilenameResolver.query(getContentResolver(), uri, Long.toString(System.currentTimeMillis()));
+        if (share) {
+            return FileUtils.getCacheFile(this, "files/" + filename);
+        } else {
+            // too bad
+            if (ContentResolver.SCHEME_FILE.equals(uri.getScheme()) && uri.getPath().contains("ScreenshotProvider")) {
+                return FileUtils.getExternalStoragePublicFile(Environment.DIRECTORY_PICTURES, "Screenshots", filename);
+            } else {
+                return FileUtils.getExternalStoragePublicFile(Environment.DIRECTORY_DOWNLOADS, "Bridge", filename);
+            }
         }
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
-    private void handleSaveFile(Uri uri, String type, boolean share) {
-        // TODO: too bad
-        FileUtils.clearCache(this);
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (!share && checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                Log.d(TAG, "no write storage permission");
-
-                onFailed(getString(R.string.fail_no_write_storage_permission));
-                return;
-            }
-        }
-
+    private Result save(Uri uri, boolean share) {
         try {
-            String filename = FilenameResolver.query(getContentResolver(), uri, Long.toString(System.currentTimeMillis()));
             InputStream is = getContentResolver().openInputStream(uri);
 
             if (is == null) {
-                onFailed("InputStream is null");
-                return;
+                Log.d(TAG, "openInputStream failed");
+
+                return new Result(new RuntimeException("openInputStream failed"));
             }
 
-            File file;
-
-            if (share) {
-                file = FileUtils.getCacheFile(this, "files/" + filename);
-            } else {
-                // too bad
-                if (uri.getPath().contains("ScreenshotProvider")) {
-                    file = FileUtils.getExternalStoragePublicFile(Environment.DIRECTORY_PICTURES, "Screenshots", filename);
-                } else {
-                    file = FileUtils.getExternalStoragePublicFile(Environment.DIRECTORY_DOWNLOADS, "Bridge", filename);
-                }
-            }
+            File file = getFile(uri, share);
             if (!file.getParentFile().exists()) {
                 file.getParentFile().mkdirs();
             }
@@ -101,68 +202,25 @@ public class FileSaveService extends IntentService {
                 outputStream.write(buffer, 0, bytesRead);
             }
 
+            Log.d(TAG, "saved " + file.getAbsolutePath());
+
             if (share) {
-                uri = Uri.fromFile(file);
+                return new Result(file, Uri.fromFile(file));
             } else {
-                uri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".fileprovider", file);
+                return new Result(file, FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".fileprovider", file));
             }
-            onSuccess(file, uri, type, share);
         } catch (IOException | SecurityException e) {
             e.printStackTrace();
 
-            onFailed(e.getMessage());
+            return new Result(e);
         }
     }
 
-    private void onSuccess(final File file, Uri uri, String type, boolean share) {
-        Log.d(TAG, "saved " + file.getAbsolutePath() + " " + uri);
-
-        int start = Environment.getExternalStorageDirectory().getAbsolutePath().length();
-        final String path = file.getAbsolutePath().substring(start);
-
-        /*NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-
-        Notification notification = new NotificationCompat.Builder(this)
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setVibrate(new long[0])
-                .setColor(ContextCompat.getColor(this, R.color.colorPrimary))
-                .setSmallIcon(R.drawable.ic_stat)
-                .setContentTitle(getString(R.string.save_notification))
-                .setContentText(path)
-                .build();
-
-        notificationManager.notify(file.getAbsolutePath().hashCode(), notification);*/
-
-        if (!share) {
-            /*
-            // require internet permission
-            DownloadManager downloadManager = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
-            downloadManager.addCompletedDownload(file.getName(), "Save via Bridge", true, type, file.getPath(), file.length(), false);*/
-
-            sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(file)));
-
-            new Handler(getMainLooper()).post(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(getApplicationContext(), getString(R.string.saved, path), Toast.LENGTH_LONG).show();
-                }
-            });
-        } else {
-            Intent intent = new Intent(Intent.ACTION_SEND);
-            intent.setType(type);
-            intent.putExtra(Intent.EXTRA_STREAM, uri);
-
-            ChooserActivity.start(this, uri, type, ResolveInfoHelper.filter(getPackageManager().queryIntentActivities(intent, 0), false));
-        }
-    }
-
-    private void onFailed(final String message) {
-        Log.d(TAG, "failed");
-
+    private void toast(final String message) {
         new Handler(getMainLooper()).post(new Runnable() {
             @Override
             public void run() {
-                Toast.makeText(getApplicationContext(), getString(R.string.save_failed, message), Toast.LENGTH_LONG).show();
+                Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
             }
         });
     }

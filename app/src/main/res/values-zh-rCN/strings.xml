@@ -4,7 +4,9 @@
     <string name="action_forwarding">转发</string>
     <string name="save_failed" formatted="false">保存失败。\n%s</string>
     <string name="saved" formatted="false">已保存到 %s。</string>
-    <string name="save_notification">文件已保存</string>
+    <plurals name="saved_multiple" formatted="false">
+        <item quantity="other" formatted="false">%2$s 及其他 %1$d 个文件已保存到 %3$s。</item>
+    </plurals>
     <string name="forward_title">转发…</string>
     <string name="select_forward_apps_title">点按切换是否显示…</string>
 
@@ -27,6 +29,8 @@
     <string name="help">帮助</string>
     <string name="help_detail"><![CDATA[您似乎开启了工作资料，若要在主用户和工作资料之间使用传递文件，您首先需要<b>在对应用户中</b>安装 Bridge 并启用对应功能。<br><br>通常对于一般应用，只需要需选择来自 Android 系统的“切换至工作（个人）”即可，对于部分<b>设计不佳的应用</b>，需要先选择<b>“转发”</b>再选择来自 <b>Bridge</b> 的<b>“切换至工作（个人）”</b>，再进行其他操作（分享或保存）。<br><br><i>“设计不佳的应用”指：<br>应用无法正确处理分享的 <font face="monospace">content uri</font>，表现为提示找不到文件或直接关闭。<br>应用会分享 <font face="monospace">file uri</font>（文件位置）给其他应用，其他应用可能没有权限打开对应文件。<i>]]></string>
 
-    <string name="file_uri_cross_user">正在从设计不佳的应用分享，您需要分享至来自 Bridge 的“转发”并选择“保存到内置存储”。</string>
+    <string name="file_uri_cross_user">正在从设计不佳的应用分享，您需要先分享至来自 Bridge 的“转发”。</string>
+
+    <string name="no_extra">这个应用没有发送文件。</string>
 
 </resources>

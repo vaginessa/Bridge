@@ -11,6 +11,10 @@ import java.io.File;
 
 public class FileUtils {
 
+    public static File getExternalStoragePublicFile(String type, String filename) {
+        return new File(Environment.getExternalStoragePublicDirectory(type).getAbsolutePath(), filename);
+    }
+
     public static File getExternalStoragePublicFile(String type, String path, String filename) {
         return new File(Environment.getExternalStoragePublicDirectory(type).getAbsolutePath() + "/" + path, filename);
     }
@@ -39,10 +43,15 @@ public class FileUtils {
         }
 
         File[] files = file.listFiles();
-        if(files != null) {
-            for (File f : files){
-                file.delete();
+        if (files != null) {
+            for (File f : files) {
+                f.delete();
             }
         }
+    }
+
+    public static String getRelativePathOfExternalStorage(File file) {
+        int start = Environment.getExternalStorageDirectory().getAbsolutePath().length();
+        return file.getAbsolutePath().substring(start);
     }
 }

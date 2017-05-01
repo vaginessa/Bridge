@@ -42,24 +42,22 @@ public class ChooserActivity extends Activity {
         shareIntent.setDataAndType(Uri.parse("content://example"), "*/*");
         List<ResolveInfo> resolveInfo = context.getPackageManager().queryIntentActivities(shareIntent, 0);
 
-        start(context, null, null, ResolveInfoHelper.filter(resolveInfo, true));
+        Intent intent = new Intent(context, ChooserActivity.class);
+        intent.putParcelableArrayListExtra(EXTRA_RESOLVE_INFO, ResolveInfoHelper.filter(resolveInfo, true));
+        context.startActivity(intent);
     }
 
     /**
      * Start chooser
-     *
-     * @param context
-     * @param uri
-     * @param type
-     * @param resolveInfo
      */
-    public static void start(Context context, Uri uri, String type, List<ResolveInfo> resolveInfo) {
-        Intent intent = new Intent(context, ChooserActivity.class);
+    public static void start(Context context, Intent intent, List<ResolveInfo> resolveInfo) {
+        intent = new Intent(intent);
+        intent.setComponent(ComponentName.createRelative(context, ChooserActivity.class.getName()));
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
-        intent.setDataAndType(uri, type);
         intent.putParcelableArrayListExtra(EXTRA_RESOLVE_INFO, (ArrayList<? extends Parcelable>) resolveInfo);
         context.startActivity(intent);
     }
+
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -74,7 +72,7 @@ public class ChooserActivity extends Activity {
             }
         });
 
-        boolean editMode = getIntent().getData() == null;
+        boolean editMode = !getIntent().hasExtra(Intent.EXTRA_STREAM);
         ArrayList<ResolveInfo> resolveInfo = getIntent().getParcelableArrayListExtra(EXTRA_RESOLVE_INFO);
 
         TextView title = (TextView) findViewById(android.R.id.title);
@@ -108,12 +106,21 @@ public class ChooserActivity extends Activity {
                     public void onClick(View v) {
                         Activity activity = ChooserActivity.this;
 
-                        Intent intent = new Intent(Intent.ACTION_SEND);
-                        intent.setType("bridge/" + activity.getIntent().getType());
-                        Uri uri = activity.getIntent().getData();
-                        uri = FileProvider.getUriForFile(activity, BuildConfig.APPLICATION_ID + ".fileprovider", new File(uri.getPath()));
-                        intent.putExtra(Intent.EXTRA_STREAM, uri);
-                        intent.setComponent(ComponentName.createRelative(info.activityInfo.packageName, info.activityInfo.name));
+                        Intent intent = new Intent(getIntent().getAction())
+                                .setType("bridge/" + getIntent().getType())
+                                .setComponent(ComponentName.createRelative(info.activityInfo.packageName, info.activityInfo.name));
+
+                        if (intent.getAction().equals(Intent.ACTION_SEND)) {
+                            Uri uri = getIntent().getParcelableExtra(Intent.EXTRA_STREAM);
+                            uri = FileProvider.getUriForFile(activity, BuildConfig.APPLICATION_ID + ".fileprovider", new File(uri.getPath()));
+                            intent.putExtra(Intent.EXTRA_STREAM, uri);
+                        } else {
+                            ArrayList<Uri> uris = new ArrayList<>();
+                            for (Uri uri : getIntent().<Uri>getParcelableArrayListExtra(Intent.EXTRA_STREAM)) {
+                                uris.add(FileProvider.getUriForFile(activity, BuildConfig.APPLICATION_ID + ".fileprovider", new File(uri.getPath())));
+                            }
+                            intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris);
+                        }
 
                         IntentUtils.startOtherActivity(activity, intent);
 
